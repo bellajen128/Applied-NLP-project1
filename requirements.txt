@@ -1,10 +1,9 @@
 streamlit==1.40.0
-torch==2.5.1
+torch
 transformers==4.46.3
 sentence-transformers==3.3.1
 spacy==3.8.2
-faiss-cpu==1.9.0
+faiss-cpu
 pandas==2.2.3
 numpy==1.26.4
 scikit-learn==1.5.2
-en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl
