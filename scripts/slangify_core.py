@@ -142,18 +142,32 @@ class SlangifySystem:
         # print("✅ FAISS index built")
         
         
+
+        
+        
         # 建立 FAISS 索引
         print("Building FAISS index...")
         self.retriever = SentenceTransformer("all-MiniLM-L6-v2", device=self.device) 
+
         texts = self.df.apply(
             lambda r: f"{str(r['word'])} : {str(r['definition'])}", 
             axis=1
         ).tolist()
-        embeddings = self.retriever.encode(texts, normalize_embeddings=True, show_progress_bar=False) 
+
+        # 關鍵優化：設置 num_workers
+        # num_workers > 0 允許並行處理，但可能會增加記憶體使用量。
+        # 通常設置為 4 或 8
+        embeddings = self.retriever.encode(
+            texts, 
+            normalize_embeddings=True, 
+            show_progress_bar=False,
+            convert_to_tensor=True,
+            batch_size=32, # 增大 batch size
+            num_workers=4 # 啟用 4 個並行處理執行緒
+        )
         self.index = faiss.IndexFlatIP(embeddings.shape[1])
         self.index.add(embeddings)
         print("✅ FAISS index built")
-        
         
         
         
