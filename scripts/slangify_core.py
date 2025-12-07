@@ -129,17 +129,34 @@ class SlangifySystem:
             print("請檢查您的資料路徑是否正確。")
             raise # 重新拋出錯誤
         
+        # # 建立 FAISS 索引
+        # print("Building FAISS index...")
+        # self.retriever = SentenceTransformer("all-MiniLM-L6-v2")
+        # texts = self.df.apply(
+        #     lambda r: f"{str(r['word'])} : {str(r['definition'])}", 
+        #     axis=1
+        # ).tolist()
+        # embeddings = self.retriever.encode(texts, normalize_embeddings=True, show_progress_bar=True)
+        # self.index = faiss.IndexFlatIP(embeddings.shape[1])
+        # self.index.add(embeddings)
+        # print("✅ FAISS index built")
+        
+        
         # 建立 FAISS 索引
         print("Building FAISS index...")
-        self.retriever = SentenceTransformer("all-MiniLM-L6-v2")
+        self.retriever = SentenceTransformer("all-MiniLM-L6-v2", device=self.device) 
         texts = self.df.apply(
             lambda r: f"{str(r['word'])} : {str(r['definition'])}", 
             axis=1
         ).tolist()
-        embeddings = self.retriever.encode(texts, normalize_embeddings=True, show_progress_bar=True)
+        embeddings = self.retriever.encode(texts, normalize_embeddings=True, show_progress_bar=False) 
         self.index = faiss.IndexFlatIP(embeddings.shape[1])
         self.index.add(embeddings)
         print("✅ FAISS index built")
+        
+        
+        
+        
         
         # 載入 BERT Classifier
         print(f"Loading BERT Classifier: {model_path}")
