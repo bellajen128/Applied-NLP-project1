@@ -103,24 +103,19 @@ class SlangifySystem:
         print("Loading spaCy...")
 
         import os
-        if not os.path.exists(spacy.util.get_package_path("en_core_web_md")):
+        print("Loading spaCy...")
+        try:
+            self.nlp = spacy.load("en_core_web_md")
+            print("✅ spaCy model loaded")
+        except OSError:
+            print("Spacy model not found. Downloading...")
             import subprocess
+            import sys
             subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_md"])
+            self.nlp = spacy.load("en_core_web_md")
+            print("✅ spaCy model downloaded and loaded")
+        
 
-        self.nlp = spacy.load("en_core_web_md")
-        
-        
-        # print("Loading spaCy...")
-        # import spacy.cli
-
-        
-        # try:
-        #     self.nlp = spacy.load("en_core_web_md")
-        # except OSError:
-        #     print("Downloading spacy model...")
-        #     import subprocess
-        #     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_md"])
-        #     self.nlp = spacy.load("en_core_web_md")
         
         
         # 載入資料
