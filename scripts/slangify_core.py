@@ -195,10 +195,7 @@ class SlangifySystem:
         embeddings = self.retriever.encode(
             texts, 
             normalize_embeddings=True, 
-            show_progress_bar=False,
-            convert_to_tensor=True,
-            batch_size=32, # 增大 batch size
-            num_workers=4 # 啟用 4 個並行處理執行緒
+            show_progress_bar=False
         )
         self.index = faiss.IndexFlatIP(embeddings.shape[1])
         self.index.add(embeddings)
