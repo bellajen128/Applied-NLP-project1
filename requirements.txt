@@ -1,9 +1,9 @@
-streamlit==1.40.0
+streamlit
 torch
-transformers==4.46.3
-sentence-transformers==3.3.1
-spacy==3.8.2
+transformers
+sentence-transformers
+spacy
 faiss-cpu
-pandas==2.2.3
-numpy==1.26.4
-scikit-learn==1.5.2
+pandas
+numpy
+scikit-learn

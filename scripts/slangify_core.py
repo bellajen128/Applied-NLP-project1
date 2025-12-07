@@ -106,18 +106,15 @@ class SlangifySystem:
         print("Loading spaCy...")
         import spacy.cli
 
+        
         try:
-            # 嘗試直接載入模型
             self.nlp = spacy.load("en_core_web_md")
         except OSError:
-            # 如果找不到模型，則自動下載
-            print("Model 'en_core_web_md' not found. Attempting to download...")
-            # 警告：在 Streamlit Cloud 中，spacy.cli.download 可能需要寫入權限，
-            # 但這是確保模型存在的標準做法。
-            spacy.cli.download("en_core_web_md") 
+            print("Downloading spacy model...")
+            import subprocess
+            subprocess.run(["python", "-m", "spacy", "download", "en_core_web_md"])
             self.nlp = spacy.load("en_core_web_md")
-        # print("Loading spaCy...")
-        # self.nlp = spacy.load("en_core_web_md")
+        
         
         # 載入資料
         print(f"Loading data: {data_path}")
