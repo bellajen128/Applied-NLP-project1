@@ -98,22 +98,29 @@ class SlangifySystem:
         data_path = project_root / data_rel_path
         model_path = project_root / model_rel_path
         # -----------------------------------
-        
-        # 載入 spaCy
-        # 在 slangify_core.py 的 SlangifySystem.__init__ 內部
 
         # 載入 spaCy
         print("Loading spaCy...")
-        import spacy.cli
+
+        import os
+        if not os.path.exists(spacy.util.get_package_path("en_core_web_md")):
+            import subprocess
+            subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_md"])
+
+        self.nlp = spacy.load("en_core_web_md")
+        
+        
+        # print("Loading spaCy...")
+        # import spacy.cli
 
         
-        try:
-            self.nlp = spacy.load("en_core_web_md")
-        except OSError:
-            print("Downloading spacy model...")
-            import subprocess
-            subprocess.run(["python", "-m", "spacy", "download", "en_core_web_md"])
-            self.nlp = spacy.load("en_core_web_md")
+        # try:
+        #     self.nlp = spacy.load("en_core_web_md")
+        # except OSError:
+        #     print("Downloading spacy model...")
+        #     import subprocess
+        #     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_md"])
+        #     self.nlp = spacy.load("en_core_web_md")
         
         
         # 載入資料
