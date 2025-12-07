@@ -97,6 +97,10 @@ class SlangifySystem:
         # 構建資料和模型的絕對路徑
         data_path = project_root / data_rel_path
         model_path = project_root / model_rel_path
+        target_dir = project_root 
+
+        self.device = torch.device('cuda' if (torch.cuda.is_available() and use_gpu) else 'cpu')
+        print(f"Using Device: {self.device}")
         # -----------------------------------
 
         ## Claude!!
@@ -121,10 +125,6 @@ class SlangifySystem:
         print("Loading spaCy...")
         import subprocess
         import sys
-
-
-        # 將模型安裝到專案根目錄，例如 /mount/src/applied-nlp-project1/
-        target_dir = project_root 
         # -----------------------------
 
         try:
