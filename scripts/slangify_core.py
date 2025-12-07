@@ -99,23 +99,59 @@ class SlangifySystem:
         model_path = project_root / model_rel_path
         # -----------------------------------
 
-        # 載入 spaCy
-        print("Loading spaCy...")
+        ## Claude!!
+        # # 載入 spaCy
+        # print("Loading spaCy...")
 
-        import os
+        # import os
+        # print("Loading spaCy...")
+        # try:
+        #     self.nlp = spacy.load("en_core_web_md")
+        #     print("✅ spaCy model loaded")
+        # except OSError:
+        #     print("Spacy model not found. Downloading...")
+        #     import subprocess
+        #     import sys
+        #     subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_md"])
+        #     self.nlp = spacy.load("en_core_web_md")
+        #     print("✅ spaCy model downloaded and loaded")
+        
+        # 在 slangify_core.py 的 SlangifySystem.__init__ 內部
+
         print("Loading spaCy...")
+        import subprocess
+        import sys
+
+
+        # 將模型安裝到專案根目錄，例如 /mount/src/applied-nlp-project1/
+        target_dir = project_root 
+        # -----------------------------
+
         try:
             self.nlp = spacy.load("en_core_web_md")
             print("✅ spaCy model loaded")
         except OSError:
             print("Spacy model not found. Downloading...")
-            import subprocess
-            import sys
-            subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_md"])
-            self.nlp = spacy.load("en_core_web_md")
-            print("✅ spaCy model downloaded and loaded")
-        
+            
+            # 使用 --target 參數，將模型安裝到專案根目錄 (有寫入權限)
+            try:
+                subprocess.check_call([
+                    sys.executable, 
+                    "-m", "pip", "install", 
+                    "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl",
+                    f"--target={target_dir}", # 指定安裝到專案根目錄
+                    "--no-deps" # 避免安裝多餘的依賴
+                ])
+            except Exception as e:
+                print(f"❌ ERROR: Failed to install model to project dir. Error: {e}")
+                raise
 
+            # 必須將目標目錄加入 Python 搜尋路徑
+            sys.path.append(str(target_dir))
+            
+            # 重新載入
+            self.nlp = spacy.load("en_core_web_md")
+            print("✅ spaCy model downloaded and loaded from project directory")
         
         
         # 載入資料
