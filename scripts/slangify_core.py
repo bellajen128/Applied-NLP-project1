@@ -369,24 +369,43 @@ class SlangifySystem:
             probs = torch.nn.functional.softmax(outputs.logits, dim=-1)[:, 1].cpu().numpy()
         
         # 計算 Combined Score
+        # for i, c in enumerate(candidates):
+        #     c["bert_score"] = float(probs[i])
+            
+        #     # 基礎分數
+        #     base_score = alpha * c["score"] + (1 - alpha) * c["bert_score"]
+            
+        #     # 詞性加分
+        #     pos_bonus = POS_PRIORITY.get(c.get("original_pos", ""), 0)
+            
+        #     # Definition 匹配加分
+        #     match_bonus = 0.15 if c.get("match_score", 0) >= 1.0 else \
+        #                  0.08 if c.get("match_score", 0) >= 0.6 else 0
+            
+        #     # 白名單加分
+        #     c['is_popular'] = (c["word"].lower() in POPULAR_SLANG)
+        #     popularity_bonus = 0.25 if c['is_popular'] else 0.05
+            
+        #     c["combined"] = base_score + pos_bonus + match_bonus + popularity_bonus
+        
+        
         for i, c in enumerate(candidates):
             c["bert_score"] = float(probs[i])
             
-            # 基礎分數
+            # 🔥 用 alpha 參數
             base_score = alpha * c["score"] + (1 - alpha) * c["bert_score"]
             
-            # 詞性加分
+            # 🔥 從 candidates 中取 original_pos
             pos_bonus = POS_PRIORITY.get(c.get("original_pos", ""), 0)
             
-            # Definition 匹配加分
-            match_bonus = 0.15 if c.get("match_score", 0) >= 1.0 else \
-                         0.08 if c.get("match_score", 0) >= 0.6 else 0
-            
-            # 白名單加分
             c['is_popular'] = (c["word"].lower() in POPULAR_SLANG)
             popularity_bonus = 0.25 if c['is_popular'] else 0.05
             
-            c["combined"] = base_score + pos_bonus + match_bonus + popularity_bonus
+            combined_raw = base_score + pos_bonus + popularity_bonus
+            
+            MAX_SCORE = 1.40
+            c["combined"] = combined_raw / MAX_SCORE
+            c["combined_raw"] = combined_raw  # 保留原始分數供 debug
         
         # 排序
         candidates.sort(key=lambda x: x["combined"], reverse=True)
@@ -608,13 +627,17 @@ class SlangifySystem:
         # Combined Score
         for i, c in enumerate(candidates):
             c["bert_score"] = float(probs[i])
-            base_score = 0.35 * c["faiss_score"] + 0.65 * c["bert_score"]
+            base_score = 0.35 * c["faiss_score"] + 0.65 * c["bert_score"]            
             pos_bonus = POS_PRIORITY.get(word_pos, 0)
-            match_bonus = 0.10 if word_lemma in c["definition"].lower() else 0
             c['is_popular'] = (c["word"].lower() in POPULAR_SLANG)
             popularity_bonus = 0.25 if c['is_popular'] else 0.05
-            c["combined"] = base_score + pos_bonus + match_bonus + popularity_bonus
-            c["score"] = round(c["combined"], 2)
+            combined_raw = base_score + pos_bonus + popularity_bonus
+            
+            MAX_SCORE = 1.40
+            c["combined"] = combined_raw / MAX_SCORE
+            c["score"] = round(c["combined"], 2)    
+            
+        
         
         # 排序
         candidates.sort(key=lambda x: x["combined"], reverse=True)

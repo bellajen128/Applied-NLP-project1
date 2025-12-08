@@ -1,0 +1,11 @@
+{
+  "bert_test_f1": 0.9857740585774059,
+  "match_score_distribution": {
+    "mean": 0.3667396061269146,
+    "perfect_match_rate": 0.024070021881838075
+  },
+  "replacement_rate": 0.6,
+  "whitelist_coverage": 0.11071428571428571,
+  "semantic_preservation": 0.8212708661953608,
+  "perplexity_delta": 572.7371032174428
+}
