@@ -1,16 +1,16 @@
 # Slangify Project
 
-自動將句子中的詞替換成俚語的 NLP 系統。
+Slangify is a deep learning-based system that automatically replaces words in sentences with appropriate slang alternatives while preserving semantic meaning.
 
-## 📁 專案結構
+## Project STructure
 ```
 NLP_latest/
-├── data/                          # 資料檔
-│   ├── raw/                       # 原始資料 (ud_2015-2025.csv)
-│   ├── slang_raw_combined.csv     # 合併原始資料 (59163 條)
-│   └── slang_clean_final.csv      # 清理後資料 (9173 條) ⭐
+├── data/                          
+│   ├── raw/                       # raw data (ud_2015-2025.csv)
+│   ├── slang_raw_combined.csv     # combined raw data (59163 entities)
+│   └── slang_clean_final.csv      # clean data (9173 entities) ⭐
 │
-├── models/                        # 訓練好的模型
+├── models/                        # trained models
 │   └── best_slang_bert_classifier.pt  # BERT Classifier (F1: 0.9858) ⭐
 │
 ├── scripts/                       # 主要腳本
@@ -137,14 +137,6 @@ python scripts/test_baseline_clean.py
   - 3000 正樣本
   - 1500 Hard Negative
   - 1500 Easy Negative
-
----
-
-## 🎯 下一步開發
-
-- [ ] 互動式多詞替換模組
-- [ ] Streamlit UI 介面
-- [ ] 部署到雲端
 
 ---
 
