@@ -1,148 +1,303 @@
-# Slangify Project
+# Slangify - Interactive Slang Generation System
 
-Slangify is a deep learning-based system that automatically replaces words in sentences with appropriate slang alternatives while preserving semantic meaning.
+An NLP-powered system that automatically converts formal language into contemporary slang while preserving semantic meaning. Built with dual-model architecture (FAISS + BERT) for real-time, context-aware slang suggestions.
 
-## Project STructure
-```
-NLP_latest/
-├── data/                          
-│   ├── raw/                       # raw data (ud_2015-2025.csv)
-│   ├── slang_raw_combined.csv     # combined raw data (59163 entities)
-│   └── slang_clean_final.csv      # clean data (9173 entities) ⭐
-│
-├── models/                        # trained models
-│   └── best_slang_bert_classifier.pt  # BERT Classifier (F1: 0.9858) ⭐
-│
-├── scripts/                       # 主要腳本
-│   ├── official_preprocessing.py  # 資料清理 pipeline
-│   ├── train_classifier.py        # 訓練 BERT Classifier
-│   └── test_baseline_clean.py     # 測試 Baseline 系統
-│
-├── training/                      # 訓練相關檔案
-│   ├── training_data_clean.json   # BERT 訓練資料 (6000 樣本) ⭐
-│   └── training_history_*.json    # 訓練歷史記錄
-│
-└── archive/                       # 舊版/測試檔案
-    ├── processed_slang_data.csv   # 舊版資料
-    ├── training_data.json         # 舊版訓練資料
-    ├── test_*.py                  # 各種測試腳本
-    └── ...
-```
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]( https://applied-nlp-project1-rh25dgdawpw9evd6fbckoe.streamlit.app/)
 
-## 🎯 Baseline 系統架構
-```
-輸入句子
-    ↓
-[1] 關鍵詞提取 (spaCy)
-    → 提取可替換詞 + 詞性標註
-    → 過濾 SKIP_WORDS (黑名單功能詞)
-    → 排序: ADJ > VERB > NOUN
-    ↓
-[2] FAISS 檢索 (預訓練 all-MiniLM-L6-v2)
-    → 為每個關鍵詞搜尋候選
-    → 過濾垃圾詞 (NER, 真實詞檢查, 統計特徵)
-    ↓
-[3] BERT Classifier 評分 (訓練好的 DistilBERT)
-    → 判斷 (sentence, slang) 配對適配性
-    ↓
-[4] Combined Score
-    → 0.35 × FAISS + 0.65 × BERT + Bonus
-    → Bonus: POS + Match + Popularity (白名單 +0.25)
-    ↓
-[5] 選擇最佳候選並替換
-```
+## Features
 
-## 🚀 快速開始
+- **Automatic Mode**: Single-click slang replacement with best candidate
+- **Interactive Mode**: Multi-word replacement with top-k suggestions
+- **Real-time Performance**: 40ms inference time per sentence
+- **High Accuracy**: 97.89% F1 on test set
+- **9,173 Curated Slang**: Filtered from 59K+ Urban Dictionary entries (2015-2025)
 
-### 1. 資料清理
+## Quick Start
+
+### Installation
 ```bash
-python scripts/official_preprocessing.py \
-    --input data/slang_raw_combined.csv \
-    --output data/slang_clean_final.csv \
-    --min_quality 4
+# Clone repository
+git clone https://github.com/ bellajen128/Applied-NLP-project1.git
+cd Applied-NLP-project1
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download spaCy model
+python -m spacy download en_core_web_md
+
+# Run Streamlit app
+streamlit run app.py
 ```
 
-**輸出：** 9173 條高品質 slang
+### Usage Example
+```python
+from scripts.slangify_core import SlangifySystem
 
----
+# Initialize system
+system = SlangifySystem()
 
-### 2. 訓練 BERT Classifier
-```bash
-# 先在 Jupyter 生成訓練資料 (training_data_clean.json)
-# 然後訓練：
+# Automatic mode
+sentence = "He likes to show off his new car."
+result, best = system.slangify(sentence)
+print(result)  # "He likes to show off his fresh car."
 
-python scripts/train_classifier.py \
-    --data training/training_data_clean.json \
-    --epochs 3 \
-    --batch_size 16
+# Interactive mode
+tokens = system.analyze_sentence(sentence)
+suggestions = system.get_suggestions(sentence, "new", "ADJ", 6, top_k=3)
+# Returns: [{'slang': 'fresh', 'score': 0.74, ...}, ...]
 ```
 
-**輸出：** models/best_slang_bert_classifier.pt (Val F1: 0.9858)
-
----
-
-### 3. 測試系統
-```bash
-python scripts/test_baseline_clean.py
+## System Architecture
+```
+Input Sentence
+    ↓
+┌─────────────────────────┐
+│  Keyword Extraction     │
+│  (spaCy POS + Lemma)    │
+└─────────────────────────┘
+    ↓
+┌─────────────────────────┐
+│  FAISS Retrieval        │
+│  (Sentence-BERT)        │
+│  9,173 → ~30 candidates │
+└─────────────────────────┘
+    ↓
+┌─────────────────────────┐
+│  BERT Classifier        │
+│  (DistilBERT)           │
+│  Context-aware ranking  │
+└─────────────────────────┘
+    ↓
+Combined Score = 0.35×FAISS + 0.65×BERT + Bonuses
+    ↓
+Best Slang Replacement
 ```
 
-**測試結果：**
-- new → fresh ⭐
-- amazing → lit af ⭐
-- upset → salty ⭐
-- leave → bounce ⭐
-- suspicious → sus ⭐
+## Technical Stack
+
+**NLP Technologies:**
+- **spaCy** (3.8.2): POS tagging, lemmatization, dependency parsing, NER
+- **Sentence-BERT** (all-MiniLM-L6-v2): Semantic embeddings for retrieval
+- **DistilBERT**: Binary classifier for slang-sentence pairing (66M parameters)
+- **FAISS**: Fast vector similarity search (Facebook AI)
+
+**Frameworks:**
+- PyTorch 2.5.1
+- Transformers 4.46.3
+- Streamlit 1.40.0
+
+## Project Structure
+```
+Applied-NLP-project1/
+├── app.py                      # Streamlit web application
+├── requirements.txt            # Python dependencies
+│
+├── data/
+│   └── slang_clean_final.csv   # 9,173 curated slang entries
+│
+├── models/
+│   └── best_slang_bert_classifier.pt  # Trained BERT (Test F1: 0.9789)
+│
+├── scripts/
+│   ├── slangify_core.py           # Core system (all functions)
+│   ├── official_preprocessing.py  # 6-stage data cleaning pipeline
+│   ├── train_classifier_with_test.py  # BERT training
+│   ├── evaluate_comprehensive.py  # Evaluation metrics
+│   └── create_visualizations.py   # Generate charts
+│
+└── training/
+    └── training_data_clean.json   # 6,000 self-supervised samples
+```
+
+## 🔬 Data Processing Pipeline
+
+**From 59,163 to 9,173 entries (15.5% retention):**
+
+1. **Filter 0**: Basic structure (length, spaces, numbers)
+2. **Filter 1**: Profanity removal (393 words from GitHub)
+3. **Filter 2**: NER filtering (person names via spaCy)
+4. **Filter 3**: Real word verification (PyEnchant dictionary)
+5. **Filter 4**: Definition quality (length, structure, common words)
+6. **Filter 5**: Statistical features (vowel ratio, repetition)
+
+**Whitelist Protection:** 150+ popular slang always retained
+
+## Training Strategy
+
+**Self-Supervised Learning** (no manual annotation):
+
+- **Positive Samples (3,000)**: Keyword from definition → template sentence
+  - Example: "upset" from "salty : angry" → "He is very upset." (label=1)
+  
+- **Hard Negatives (1,500)**: Same POS but unrelated
+  - Example: "He is very upset." + "car : vehicle" (label=0)
+  
+- **Easy Negatives (1,500)**: Random pairings
+  - Example: "He is happy." + "bounce : leave" (label=0)
+
+**Training:**
+- Split: 70% train / 15% val / 15% test
+- 3 epochs, AdamW optimizer (lr=2e-5)
+- Final Test F1: **0.9789**
+
+## 📈 Evaluation Results
+
+### Controlled Test Set (10 sentences)
+
+| Metric | Value | Target |
+|--------|-------|--------|
+| Replacement Rate | 90.0% | >80% ✅ |
+| Whitelist Coverage | 46.7% | >40% ✅ |
+| Semantic Preservation | 0.698 | 0.65-0.85 ✅ |
+| Inference Time | 0.04s | <1s ✅ |
+
+### Real-World Test Set (100 sentences)
+
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| Replacement Rate | 60.0% | Many words lack slang |
+| Whitelist Coverage | 11.1% | Need broader coverage |
+| Semantic Preservation | 0.821 | Excellent retention |
+| BERT Confidence | 0.890 | High certainty |
+| Perplexity Delta | +572.7 | Style change (expected) |
+
+## Example Outputs
+```
+Input:  "He likes to show off his new car."
+Output: "He likes to show off his fresh car."
+Slang:  new → fresh (score: 0.74, whitelist: ⭐)
+
+Input:  "That party was really amazing last night."
+Output: "That party was really lit af last night."
+Slang:  amazing → lit af (score: 1.25, whitelist: ⭐)
+
+Input:  "She is upset because she lost the game."
+Output: "She is salty because she lost the game."
+Slang:  upset → salty (score: 1.39, whitelist: ⭐)
+
+Input:  "I need to leave soon."
+Output: "I need to bounce soon."
+Slang:  leave → bounce (score: 1.22, whitelist: ⭐)
+```
+
+## Key Design Decisions
+
+### 1. Why Dual-Model Architecture?
+
+**FAISS (Retrieval):**
+- Fast: 0.01s to search 9,173 entries
+- Reduces search space to ~30 candidates
+
+**BERT (Re-ranking):**
+- Accurate: Context-aware scoring
+- Only evaluates top candidates
+
+**Result:** 10x faster than BERT-only, more accurate than FAISS-only
+
+### 2. Why Self-Supervised Learning?
+
+**Alternative:** Manual annotation
+- Would require labeling thousands of (sentence, slang) pairs
+- High cost, time-consuming
+
+**Our Approach:** Auto-generate labels
+- Positive: Keyword in definition → good pair
+- Negative: Keyword not in definition → bad pair
+- Achieved 97.89% F1 with zero annotation
+
+### 3. Why Whitelist Bonus?
+
+**Problem:** BERT training data has bias
+- "fresh" only has 11 training samples
+- BERT gives fresh low score (0.03)
+
+**Solution:** +0.25 bonus for 150+ popular slang
+- Ensures common slang ranks high
+- Compensates for data limitations
+
+## Technical Implementation
+
+### Combined Score Formula
+```
+Combined = (α × FAISS + (1-α) × BERT + POS + Popularity) / 1.40
+
+Where:
+- α = 0.35 (35% FAISS, 65% BERT)
+- POS Bonus: ADJ +0.15, NOUN +0.05, VERB +0.0
+- Popularity: Whitelist +0.25, Regular +0.05
+- Normalized to [0, 1]
+```
+
+### Filtering Rules
+
+**Candidate filtering (10+ rules):**
+- Remove functional words (SKIP_WORDS: is, the, very, etc.)
+- Remove person names (spaCy NER)
+- Remove uppercase words (except acronyms ≤5 chars)
+- Check vowel ratio (15-50%)
+- Remove keyboard sequences (qwer, asdf)
+- Avoid original word similarity
+
+## Performance Metrics
+
+- **BERT Test F1**: 0.9789 (excellent model accuracy)
+- **Replacement Rate**: 60-90% (depends on text complexity)
+- **Semantic Preservation**: 0.82 (good meaning retention)
+- **Inference Speed**: 0.04s (real-time)
+- **Model Size**: 767MB (DistilBERT checkpoint)
+
+## Limitations
+
+1. **Training Data Bias**
+   - Some words (e.g., "fresh") have limited training samples
+   - BERT gives low scores, compensated by whitelist
+
+2. **English Only**
+   - Data source limitation
+   - No multilingual support
+
+3. **Static Database**
+   - Based on 2015-2025 data
+   - New emerging slang not included
+
+4. **Moderate Real-World Coverage**
+   - 60% replacement rate on diverse corpus
+   - Many formal/technical words lack slang alternatives
+
+## Future Improvements
+
+- [ ] Expand training data with diverse sentence templates
+- [ ] Add more fresh samples to fix BERT bias
+- [ ] Multi-language support
+- [ ] Personalization by user demographics
+- [ ] Context-aware replacement (full dialogue)
+- [ ] Continuous updates with emerging slang
+
+## Citation
+```bibtex
+@misc{slangify2025,
+  title={Slangify: Interactive Slang Generation with Dual-Model Architecture},
+  author={Bella Jen},
+  year={2025},
+  publisher={GitHub},
+  url={https://github.com/ bellajen128/Applied-NLP-project1}
+}
+```
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Acknowledgments
+
+- Urban Dictionary community for slang data (2015-2025)
+- Hugging Face for pre-trained models
+- spaCy, FAISS, Sentence-Transformers teams
+
+## Contact
+
+For questions or feedback: jen.che @northeastern.edu
 
 ---
-
-## 📊 系統效能
-
-| 指標 | 數值 |
-|------|------|
-| 資料量 | 9173 條乾淨 slang |
-| BERT Val F1 | 0.9858 |
-| 測試成功率 | 100% (5/5) |
-| 推理速度 | ~0.5s per query |
-
----
-
-## 🔧 配置參數
-
-### FAISS Retrieval
-- `k_per_keyword`: 5 (每個關鍵詞取 5 個候選)
-- `min_faiss_score`: 0.25
-
-### BERT Classifier
-- `alpha`: 0.35 (FAISS vs BERT 權重)
-- `conf_threshold`: 0.55
-
-### Bonus Scores
-- POS: ADJ +0.15, NOUN +0.05, VERB +0.0
-- Match: Definition 匹配 +0.15
-- Popularity: 白名單 +0.25
-
----
-
-## 📝 重要檔案說明
-
-### 資料檔
-- `slang_clean_final.csv` - **最終使用的乾淨資料** ⭐
-- `slang_raw_combined.csv` - 原始合併資料（備份用）
-
-### 模型檔
-- `best_slang_bert_classifier.pt` - **訓練好的 BERT Classifier** ⭐
-
-### 訓練資料
-- `training_data_clean.json` - **BERT 訓練資料** ⭐
-  - 3000 正樣本
-  - 1500 Hard Negative
-  - 1500 Easy Negative
-
----
-
-## 📚 參考文件
-
-- Preprocessing: `scripts/official_preprocessing.py`
-- Training: `scripts/train_classifier.py`
-- Testing: `scripts/test_baseline_clean.py`
 
