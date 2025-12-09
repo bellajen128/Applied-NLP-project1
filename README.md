@@ -285,10 +285,6 @@ Where:
 }
 ```
 
-## License
-
-MIT License - see LICENSE file for details
-
 ## Acknowledgments
 
 - Urban Dictionary community for slang data (2015-2025)
